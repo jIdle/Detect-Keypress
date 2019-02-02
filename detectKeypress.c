@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <poll.h>
@@ -15,7 +12,8 @@ int y = 0;
 int tWidth = 0;
 int tHeight = 0;
 
-/* "move" receives the user's keypress as an argument.
+/* 
+ * "move" receives the user's keypress as an argument.
  * Steps in order:
  *      1. Store previous coords
  *      2. On valid keypress, modify location
@@ -28,14 +26,19 @@ int move(char key) {
     if(key == 'w')
         y -= (y > 0) ? 1 : 0;
     else if(key == 's')
-        y += (y < 50) ? 1 : 0;
+        y += (y < tHeight-3) ? 1 : 0;
     else if(key == 'a')
         x -= (x > 0) ? 1 : 0;
     else if(key == 'd')
-        x += (x < 50) ? 1 : 0;
+        x += (x < tWidth) ? 1 : 0;
 
     return !(old ^ (x+y));
 }
+
+/*
+ * "changBG" changes the background color of the terminal using the
+ * escape sequences defined at the top. 
+ */
 
 void changeBG(char * color) {
     for(int i = 0; i < tHeight; ++i) {
@@ -46,7 +49,8 @@ void changeBG(char * color) {
     }
 }
 
-/* "display" receives a signal indicating that:
+/* 
+ * "display" receives a signal indicating that:
  *      1. The terminal and location should be refreshed
  *      2. The terminal should flash red
  */
@@ -75,14 +79,14 @@ int main() {
     char key;
 
     tcgetattr(fileno(stdin), &settings);
-    settings.c_lflag &= (~ICANON & ~ECHO);
+    settings.c_lflag &= (~ICANON & ~ECHO); // Allow terminal to respond without a trailing delimiter in buffer
     tcsetattr(fileno(stdin), TCSANOW, &settings);
 
-    ioctl(0, TIOCGWINSZ, &termDim);
+    ioctl(0, TIOCGWINSZ, &termDim); // Grab terminal dimensions
     tWidth = termDim.ws_col;
     tHeight = termDim.ws_row;
 
-    system("setterm -cursor off");
+    system("setterm -cursor off"); // Cursor looks bad
     system("clear");
 
     // Input loop
@@ -90,11 +94,11 @@ int main() {
         FD_ZERO(&readfds);
         FD_SET(fileno(stdin), &readfds);
 
-        int fdNum = select(fileno(stdin)+1, &readfds, NULL, NULL, NULL);
+        int fdNum = select(fileno(stdin)+1, &readfds, NULL, NULL, NULL); // Wait on stdin for input
 
         if(fdNum > 0) {
             read(fileno(stdin), &key, 1);
-            display(move(key));
+            display(move(key)); // Update terminal
         } else if(fdNum < 0)
             exit(EXIT_FAILURE);
     }
