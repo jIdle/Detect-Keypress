@@ -7,70 +7,14 @@
 #define RED "\e[41m"
 #define BLACK "\e[0m"
 
+int move(char key);
+void display(int atBounds);
+void changeBG(char * color);
+
 int x = 0;
 int y = 0;
 int tWidth = 0;
 int tHeight = 0;
-
-/* 
- * "move" receives the user's keypress as an argument.
- * Steps in order:
- *      1. Store previous coords
- *      2. On valid keypress, modify location
- *      3. Return whether coords have changed
- */
-
-int move(char key) {
-    int old = x + y;
-
-    if(key == 'w')
-        y -= (y > 0) ? 1 : 0;
-    else if(key == 's')
-        y += (y < tHeight-3) ? 1 : 0;
-    else if(key == 'a')
-        x -= (x > 0) ? 1 : 0;
-    else if(key == 'd')
-        x += (x < tWidth) ? 1 : 0;
-
-    return !(old ^ (x+y));
-}
-
-/*
- * "changBG" changes the background color of the terminal using the
- * escape sequences defined at the top. 
- */
-
-void changeBG(char * color) {
-    for(int i = 0; i < tHeight; ++i) {
-        for(int j = 0; j < tWidth; ++j) {
-            printf("%s", color);
-        }
-        printf("\n");
-    }
-}
-
-/* 
- * "display" receives a signal indicating that:
- *      1. The terminal and location should be refreshed
- *      2. The terminal should flash red
- */
-
-void display(int atBounds) {
-    if(atBounds) {
-        changeBG(RED);
-        system("clear");
-        poll(NULL, NULL, 50);
-        changeBG(BLACK);
-    }
-
-    system("clear");
-    for(int ver = 0; ver < y; ++ver)
-        printf("\n");
-    for(int hor = 0; hor < x; ++hor)
-        printf("  ");
-    printf("O\n");
-}
-
 
 int main() {
     struct termios settings;
@@ -103,4 +47,62 @@ int main() {
             exit(EXIT_FAILURE);
     }
     exit(EXIT_SUCCESS);
+}
+
+/* 
+ * "move" receives the user's keypress as an argument.
+ * Steps in order:
+ *      1. Store previous coords
+ *      2. On valid keypress, modify location
+ *      3. Return whether coords have changed
+ */
+
+int move(char key) {
+    int old = x + y;
+
+    if(key == 'w')
+        y -= (y > 0) ? 1 : 0;
+    else if(key == 's')
+        y += (y < tHeight-3) ? 1 : 0;
+    else if(key == 'a')
+        x -= (x > 0) ? 1 : 0;
+    else if(key == 'd')
+        x += (x < tWidth) ? 1 : 0;
+
+    return !(old ^ (x+y));
+}
+
+/* 
+ * "display" receives a signal indicating that:
+ *      1. The terminal and location should be refreshed
+ *      2. The terminal should flash red
+ */
+
+void display(int atBounds) {
+    if(atBounds) {
+        changeBG(RED);
+        system("clear");
+        poll(NULL, NULL, 50);
+        changeBG(BLACK);
+    }
+
+    system("clear");
+    for(int ver = 0; ver < y; ++ver)
+        printf("\n");
+    for(int hor = 0; hor < x; ++hor)
+        printf("  ");
+    printf("O\n");
+}
+
+/*
+ * "changeBG" changes the background color of the terminal using the
+ * escape sequences defined at the top. 
+ */
+
+void changeBG(char * color) {
+    for(int i = 0; i < tHeight; ++i) {
+        for(int j = 0; j < tWidth; ++j)
+            printf("%s", color);
+        printf("\n");
+    }
 }
